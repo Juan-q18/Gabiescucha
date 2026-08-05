@@ -12,7 +12,11 @@ WHISPER_MODEL: str = os.getenv("WHISPER_MODEL", "small")
 WHISPER_DEVICE: str = os.getenv("WHISPER_DEVICE", "cuda")
 WHISPER_COMPUTE_TYPE: str = os.getenv("WHISPER_COMPUTE_TYPE", "int8")
 WHISPER_LANGUAGE: str = os.getenv("WHISPER_LANGUAGE", "es")
-NO_SPEECH_THRESHOLD: float = float(os.getenv("NO_SPEECH_THRESHOLD", "-0.5"))
+NO_SPEECH_THRESHOLD: float = float(os.getenv("NO_SPEECH_THRESHOLD", "-1.0"))
+NO_SPEECH_PROB_THRESHOLD: float = float(os.getenv("NO_SPEECH_PROB_THRESHOLD", "0.6"))
+
+SAVE_SEGMENTS: bool = os.getenv("SAVE_SEGMENTS", "0") == "1"
+SEGMENTS_DIR: str = os.getenv("SEGMENTS_DIR", "segments")
 
 TTS_VOICE: str = os.getenv("TTS_VOICE", "es-AR-ElenaNeural")
 TTS_RATE: str = os.getenv("TTS_RATE", "+0%")

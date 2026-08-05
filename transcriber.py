@@ -21,13 +21,15 @@ class WhisperTranscriber:
         device: str = "cuda",
         compute_type: str = "int8",
         language: str = "es",
-        no_speech_threshold: float = -0.5,
+        no_speech_threshold: float = -1.0,
+        no_speech_prob_threshold: float = 0.6,
     ):
         self.model = model
         self.device = device
         self.compute_type = compute_type
         self.language = language
         self.no_speech_threshold = no_speech_threshold
+        self.no_speech_prob_threshold = no_speech_prob_threshold
         self._model = None
         self._lock = threading.Lock()
         self._load_attempted = False
@@ -82,13 +84,23 @@ class WhisperTranscriber:
                 audio,
                 language=self.language,
                 condition_on_previous_text=False,
-                vad_filter=True,
+                vad_filter=False,
             )
             parts = []
             for seg in segments:
-                if seg.avg_logprob < self.no_speech_threshold:
-                    continue
                 text = seg.text.strip()
-                if text:
-                    parts.append(text)
+                no_speech = seg.no_speech_prob > self.no_speech_prob_threshold
+                low_conf = seg.avg_logprob < self.no_speech_threshold
+                if not text:
+                    log.debug("Segmento vacío (no_speech=%.2f)", seg.no_speech_prob)
+                    continue
+                if low_conf or no_speech:
+                    log.debug(
+                        "Segmento descartado (logprob=%.2f no_speech=%.2f): %r",
+                        seg.avg_logprob,
+                        seg.no_speech_prob,
+                        text,
+                    )
+                    continue
+                parts.append(text)
         return " ".join(parts).strip()

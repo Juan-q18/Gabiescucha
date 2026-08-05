@@ -63,7 +63,10 @@ Variables de `.env`:
 | `WHISPER_DEVICE` | `cuda` | `cuda` si hay GPU NVIDIA, si no `cpu`. |
 | `WHISPER_COMPUTE_TYPE` | `int8` | Precisión de cómputo (int8/int8_float16/float16). |
 | `WHISPER_LANGUAGE` | `es` | Idioma de la transcripción. |
-| `NO_SPEECH_THRESHOLD` | `-0.5` | Confianza mínima del segmento; por debajo se descarta. |
+| `NO_SPEECH_THRESHOLD` | `-1.0` | Confianza mínima del segmento (avg_logprob); solo se descarta si además `no_speech_prob` supera el umbral siguiente. |
+| `NO_SPEECH_PROB_THRESHOLD` | `0.6` | Probabilidad de "no voz" de whisper para descartar un segmento. |
+| `SAVE_SEGMENTS` | `0` | Guarda cada segmento capturado como WAV en `SEGMENTS_DIR` (diagnóstico). |
+| `SEGMENTS_DIR` | `segments` | Carpeta donde se guardan los segmentos con `SAVE_SEGMENTS=1`. |
 | `TTS_VOICE` | `es-AR-ElenaNeural` | Voz de edge-tts. |
 | `TTS_RATE` | `+0%` | Velocidad del TTS (ej. `+10%`, `-10%`). |
 | `RELAY_TRANSCRIPTS` | `1` | Postea en el canal las frases con el wake word. |

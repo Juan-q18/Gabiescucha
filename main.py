@@ -73,6 +73,7 @@ transcriber = WhisperTranscriber(
     config.WHISPER_COMPUTE_TYPE,
     config.WHISPER_LANGUAGE,
     config.NO_SPEECH_THRESHOLD,
+    config.NO_SPEECH_PROB_THRESHOLD,
 )
 wake_word = config.WAKE_WORD
 
@@ -165,9 +166,24 @@ def get_player(vc) -> MusicPlayer:
     return player
 
 
+def _save_segment(user, pcm) -> None:
+    try:
+        os.makedirs(config.SEGMENTS_DIR, exist_ok=True)
+        ts = time.strftime("%Y%m%d-%H%M%S")
+        name = getattr(user, "display_name", "desconocido")
+        safe = "".join(c for c in name if c.isalnum() or c in " _-")[:24] or "desconocido"
+        path = os.path.join(config.SEGMENTS_DIR, f"{ts}_{safe}.wav")
+        with open(path, "wb") as f:
+            f.write(transcriber.pcm_to_wav(pcm))
+    except Exception:
+        log.exception("Error guardando segmento de audio")
+
+
 def on_segment(user, pcm):
     seconds = len(pcm) / listener_mod.BYTES_PER_SECOND
     log.info("Segmento de voz de %s (%.2fs)", getattr(user, "display_name", user), seconds)
+    if config.SAVE_SEGMENTS:
+        _save_segment(user, pcm)
     with _pending_lock:
         pending[user.id] = (user, pcm)
 
