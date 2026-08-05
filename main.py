@@ -9,6 +9,7 @@ import discord
 from discord.ext import commands, voice_recv
 
 import config
+import dave_patch
 import listener as listener_mod
 import moderation as mod
 import tts as tts_mod
@@ -25,32 +26,7 @@ logging.getLogger("discord.gateway").setLevel(logging.INFO)
 logging.getLogger("httpx").setLevel(logging.WARNING)
 logging.getLogger("faster_whisper").setLevel(logging.INFO)
 
-
-def _patch_voice_recv_router() -> None:
-    """Workaround para el bug 'OpusError: corrupted stream' de discord-ext-voice-recv."""
-    from discord.ext.voice_recv.router import PacketRouter
-
-    if getattr(PacketRouter, "_patched", False):
-        return
-
-    def _do_run(self) -> None:
-        while not self._end_thread.is_set():
-            self.waiter.wait()
-            with self._lock:
-                for decoder in self.waiter.items:
-                    try:
-                        data = decoder.pop_data()
-                    except Exception:
-                        continue
-                    if data is not None:
-                        self.sink.write(data.source, data)
-
-    PacketRouter._do_run = _do_run
-    PacketRouter._patched = True
-    log.info("Workaround aplicado al router de voz (corrupted stream)")
-
-
-_patch_voice_recv_router()
+dave_patch.apply_dave_patch()
 
 
 

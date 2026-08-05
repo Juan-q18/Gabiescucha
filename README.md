@@ -134,6 +134,7 @@ Los nombres se resuelven con coincidencia aproximada sobre el nick/nombre (ej. "
 
 ```
 main.py          # bot: comandos, dispatch de voz, ciclo de vida
+dave_patch.py    # monkey-patch: descifra DAVE (E2EE) en la voz recibida
 listener.py      # SpeechSink: VAD por energía + segmentación por usuario
 transcriber.py   # WhisperTranscriber local (faster-whisper, CPU/CUDA)
 _cuda.py         # expone los DLL de nvidia al loader en Windows
