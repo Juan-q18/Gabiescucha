@@ -12,6 +12,10 @@ WHISPER_MODEL: str = os.getenv("WHISPER_MODEL", "small")
 WHISPER_DEVICE: str = os.getenv("WHISPER_DEVICE", "cuda")
 WHISPER_COMPUTE_TYPE: str = os.getenv("WHISPER_COMPUTE_TYPE", "int8")
 WHISPER_LANGUAGE: str = os.getenv("WHISPER_LANGUAGE", "es")
+WHISPER_INITIAL_PROMPT: str = os.getenv(
+    "WHISPER_INITIAL_PROMPT",
+    "Señor Gabriel, muteá a, desmutear, silenciar, sordear, desordear, mover a, reproducir música, tocar, poné, decir, hablá, escríbime, expulsar, banear, ayuda.",
+)
 NO_SPEECH_THRESHOLD: float = float(os.getenv("NO_SPEECH_THRESHOLD", "-1.0"))
 NO_SPEECH_PROB_THRESHOLD: float = float(os.getenv("NO_SPEECH_PROB_THRESHOLD", "0.6"))
 

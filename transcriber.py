@@ -23,6 +23,7 @@ class WhisperTranscriber:
         language: str = "es",
         no_speech_threshold: float = -1.0,
         no_speech_prob_threshold: float = 0.6,
+        initial_prompt: str = "",
     ):
         self.model = model
         self.device = device
@@ -30,6 +31,7 @@ class WhisperTranscriber:
         self.language = language
         self.no_speech_threshold = no_speech_threshold
         self.no_speech_prob_threshold = no_speech_prob_threshold
+        self.initial_prompt = initial_prompt
         self._model = None
         self._lock = threading.Lock()
         self._load_attempted = False
@@ -83,6 +85,7 @@ class WhisperTranscriber:
             segments, info = self._model.transcribe(
                 audio,
                 language=self.language,
+                initial_prompt=self.initial_prompt,
                 condition_on_previous_text=False,
                 vad_filter=False,
             )

@@ -44,6 +44,7 @@ transcriber = WhisperTranscriber(
     config.WHISPER_LANGUAGE,
     config.NO_SPEECH_THRESHOLD,
     config.NO_SPEECH_PROB_THRESHOLD,
+    config.WHISPER_INITIAL_PROMPT,
 )
 wake_word = config.WAKE_WORD
 
@@ -174,7 +175,7 @@ async def process_segment(user, pcm):
 
     log.info("Transcripción de %s: %s", user.display_name, text)
 
-    if wake_word in _normalize(text):
+    if _normalize(wake_word) in _normalize(text):
         if config.RELAY_TRANSCRIPTS:
             await reply(user.guild, f"**{user.display_name}** dijo: _{text}_")
         await dispatch_voice_command(user, text)
@@ -182,14 +183,10 @@ async def process_segment(user, pcm):
 
 async def dispatch_voice_command(user, text: str) -> None:
     guild = user.guild
-    low = text.lower()
-    idx = low.find(wake_word)
-    if idx >= 0:
-        phrase = text[idx + len(wake_word):]
-    else:
-        norm = _normalize(text)
-        ni = norm.find(_normalize(wake_word))
-        phrase = text[ni + len(wake_word):] if ni >= 0 else ""
+    norm = _normalize(text)
+    nwake = _normalize(wake_word)
+    ni = norm.find(nwake)
+    phrase = norm[ni + len(nwake):] if ni >= 0 else ""
 
     cmd = parse_intent(phrase)
     if cmd.action == "none":
