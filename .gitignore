@@ -1,0 +1,9 @@
+.segments/
+__pycache__/
+bot_err.log
+bot_out.log
+*.pyc
+*.wav
+.env
+.env.*
+!.env.example

@@ -1,0 +1,24 @@
+import os
+
+from dotenv import load_dotenv
+
+load_dotenv()
+
+BOT_TOKEN: str = os.getenv("DISCORD_BOT_TOKEN", "")
+
+WAKE_WORD: str = os.getenv("WAKE_WORD", "señor gabriel").strip().lower()
+
+WHISPER_MODEL: str = os.getenv("WHISPER_MODEL", "small")
+WHISPER_DEVICE: str = os.getenv("WHISPER_DEVICE", "cuda")
+WHISPER_COMPUTE_TYPE: str = os.getenv("WHISPER_COMPUTE_TYPE", "int8")
+WHISPER_LANGUAGE: str = os.getenv("WHISPER_LANGUAGE", "es")
+NO_SPEECH_THRESHOLD: float = float(os.getenv("NO_SPEECH_THRESHOLD", "-0.5"))
+
+TTS_VOICE: str = os.getenv("TTS_VOICE", "es-AR-ElenaNeural")
+TTS_RATE: str = os.getenv("TTS_RATE", "+0%")
+
+RELAY_TRANSCRIPTS: bool = os.getenv("RELAY_TRANSCRIPTS", "1") == "1"
+IGNORE_BOT_AUDIO: bool = os.getenv("IGNORE_BOT_AUDIO", "1") == "1"
+
+YDL_SLEEP_REQUESTS: float = float(os.getenv("YDL_SLEEP_REQUESTS", "0.5"))
+MUSIC_VOLUME: float = float(os.getenv("MUSIC_VOLUME", "0.5"))
