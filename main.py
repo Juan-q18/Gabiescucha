@@ -52,13 +52,7 @@ def _patch_voice_recv_router() -> None:
 
 _patch_voice_recv_router()
 
-_opus_dll = os.path.join(os.path.dirname(os.path.abspath(__file__)), "bin", "libopus-0.x64.dll")
-if not discord.opus.is_loaded():
-    try:
-        discord.opus.load_opus(_opus_dll)
-        log.info("libopus cargado correctamente")
-    except Exception as exc:
-        log.error("No se pudo cargar libopus (%s): %s", _opus_dll, exc)
+
 
 intents = discord.Intents.default()
 intents.message_content = True

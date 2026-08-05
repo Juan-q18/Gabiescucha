@@ -142,7 +142,6 @@ music.py         # reproductor con cola (yt-dlp + ffmpeg)
 tts.py           # síntesis de voz con edge-tts + reproducción
 moderation.py    # acciones de moderación + resolución de miembros/canales
 config.py        # configuración desde .env
-bin/             # libopus (dll) para la decodificación de voz
 ```
 
 ---
