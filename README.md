@@ -63,6 +63,7 @@ Variables de `.env`:
 | `WHISPER_DEVICE` | `cuda` | `cuda` si hay GPU NVIDIA, si no `cpu`. |
 | `WHISPER_COMPUTE_TYPE` | `int8` | Precisión de cómputo (int8/int8_float16/float16). |
 | `WHISPER_LANGUAGE` | `es` | Idioma de la transcripción. |
+| `WHISPER_INITIAL_PROMPT` | *(frase de comandos)* | Frase de ejemplo que inclina a whisper hacia los comandos del bot (mejora el parseo). |
 | `NO_SPEECH_THRESHOLD` | `-1.0` | Confianza mínima del segmento (avg_logprob); solo se descarta si además `no_speech_prob` supera el umbral siguiente. |
 | `NO_SPEECH_PROB_THRESHOLD` | `0.6` | Probabilidad de "no voz" de whisper para descartar un segmento. |
 | `SAVE_SEGMENTS` | `0` | Guarda cada segmento capturado como WAV en `SEGMENTS_DIR` (diagnóstico). |
