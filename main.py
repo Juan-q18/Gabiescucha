@@ -114,8 +114,34 @@ async def reply(guild, text: str) -> None:
             log.exception("Error enviando respuesta al canal de casa")
 
 
-async def connect_and_listen(channel, guild, home_channel_id) -> discord.VoiceClient:
-    vc = await channel.connect(cls=voice_recv.VoiceRecvClient)
+def _check_voice_perms(channel, me) -> None:
+    """Valida permisos y capacidad del canal antes de intentar conectar (evita timeouts de 30s)."""
+    perms = channel.permissions_for(me)
+    if not perms.connect:
+        raise ValueError("El bot no tiene permiso **Conectar** en ese canal de voz.")
+    if not perms.speak:
+        log.warning("El bot no tiene permiso **Hablar** en %s (la música/TTS no se oirá)", channel.name)
+    if getattr(channel, "user_limit", 0) and len(channel.members) >= channel.user_limit:
+        if not perms.move_members:
+            raise ValueError(
+                "El canal de voz está **lleno** y el bot no tiene permiso **Mover Miembros**."
+            )
+
+
+async def connect_and_listen(channel, guild, home_channel_id, attempts: int = 2) -> discord.VoiceClient:
+    _check_voice_perms(channel, guild.me)
+    last_exc = None
+    for attempt in range(attempts):
+        try:
+            vc = await channel.connect(cls=voice_recv.VoiceRecvClient, timeout=20)
+            break
+        except (asyncio.TimeoutError, Exception) as exc:
+            last_exc = exc
+            log.warning("Intento %d/%d de conexión de voz falló: %s", attempt + 1, attempts, exc)
+            if attempt + 1 < attempts:
+                await asyncio.sleep(4)
+    else:
+        raise last_exc
     sink = SpeechSink(on_segment=on_segment, ignore_bots=config.IGNORE_BOT_AUDIO)
     vc.listen(sink)
     home_channels[guild.id] = home_channel_id
