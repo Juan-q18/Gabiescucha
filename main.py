@@ -1,9 +1,11 @@
 import asyncio
 import logging
 import os
+import re
 import threading
 import time
 import unicodedata
+from typing import Optional
 
 import discord
 from discord.ext import commands, voice_recv
@@ -61,6 +63,31 @@ def _normalize(text: str) -> str:
     text = unicodedata.normalize("NFD", text)
     text = "".join(c for c in text if unicodedata.category(c) != "Mn")
     return text.lower()
+
+
+def _find_wake(text: str) -> Optional[int]:
+    """Busca el wake word con limites de palabra y devuelve el indice crudo
+    donde termina (para cortar la frase cruda). None si no aparece."""
+    nwake = _normalize(wake_word)
+    if not nwake or not text:
+        return None
+
+    # Normalizar char a char para poder mapear indices crudos (NFD puede
+    # partir un caracter en varios, ej. 'ñ' -> 'n' + tilde combinante).
+    norm_chars: list = []
+    for i, c in enumerate(text):
+        cc = unicodedata.normalize("NFD", c)
+        cc = "".join(x for x in cc if unicodedata.category(x) != "Mn").lower()
+        if cc:
+            norm_chars.append((i, cc))
+    if len(norm_chars) < len(nwake):
+        return None
+
+    flat = "".join(cc for _, cc in norm_chars)
+    m = re.search(r"(?<!\w)" + re.escape(nwake) + r"(?!\w)", flat)
+    if not m:
+        return None
+    return norm_chars[m.end() - 1][0] + 1
 
 
 async def segment_worker():
@@ -175,7 +202,7 @@ async def process_segment(user, pcm):
 
     log.info("Transcripción de %s: %s", user.display_name, text)
 
-    if _normalize(wake_word) in _normalize(text):
+    if _find_wake(text) is not None:
         if config.RELAY_TRANSCRIPTS:
             await reply(user.guild, f"**{user.display_name}** dijo: _{text}_")
         await dispatch_voice_command(user, text)
@@ -183,10 +210,10 @@ async def process_segment(user, pcm):
 
 async def dispatch_voice_command(user, text: str) -> None:
     guild = user.guild
-    norm = _normalize(text)
-    nwake = _normalize(wake_word)
-    ni = norm.find(nwake)
-    phrase = norm[ni + len(nwake):] if ni >= 0 else ""
+    raw_end = _find_wake(text)
+    if raw_end is None:
+        return
+    phrase = text[raw_end:]
 
     cmd = parse_intent(phrase)
     if cmd.action == "none":

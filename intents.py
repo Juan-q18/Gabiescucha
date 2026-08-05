@@ -19,12 +19,13 @@ _VERBS = {
 }
 
 # Rellenos que whisper puede intercalar; se descartan al armar el target.
+# Se incluyen variantes con y sin acento (whisper puede escribir ambas).
 _FILLERS = {
     "a", "al", "la", "el", "lo", "los", "las", "un", "una", "unas",
-    "que", "me", "se", "te", "le", "lo", "yo", "tú", "vos", "usted",
+    "que", "me", "se", "te", "le", "lo", "yo", "tú", "tu", "vos", "usted",
     "podes", "puedes", "puedo", "y", "dale", "che", "eh", "ah", "bueno",
     "quiero", "necesito", "por", "favor", "para", "hacia", "a ver", "aver",
-    "entonces", "después", "luego", "mira", "mirá", "o sea",
+    "entonces", "después", "despues", "luego", "mira", "mirá", "o sea", "osea",
 }
 
 _RULES = [
