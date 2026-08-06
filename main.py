@@ -320,13 +320,25 @@ async def dispatch_voice_command(user, text: str, pcm=None) -> None:
     log.info("Comando por voz de %s: %s %s", user.display_name, cmd.action, cmd.args)
 
     if cmd.action == "music":
-        await music_command(guild, member, cmd.text, requester=user.display_name)
+        if config.MUSIC_PROXY:
+            await music_proxy_play_command(guild, cmd.text)
+        else:
+            await music_command(guild, member, cmd.text, requester=user.display_name)
     elif cmd.action == "music_pause":
-        await music_pause_command(guild)
+        if config.MUSIC_PROXY:
+            await proxy_send_command(guild, config.PROXY_PAUSE_COMMAND)
+        else:
+            await music_pause_command(guild)
     elif cmd.action == "music_resume":
-        await music_resume_command(guild)
+        if config.MUSIC_PROXY:
+            await proxy_send_command(guild, config.PROXY_RESUME_COMMAND)
+        else:
+            await music_resume_command(guild)
     elif cmd.action == "music_skip":
-        await music_skip_command(guild)
+        if config.MUSIC_PROXY:
+            await proxy_send_command(guild, config.PROXY_SKIP_COMMAND)
+        else:
+            await music_skip_command(guild)
     elif cmd.action == "music_volume_up":
         await music_volume_command(guild, "up")
     elif cmd.action == "music_volume_down":
@@ -339,6 +351,22 @@ async def dispatch_voice_command(user, text: str, pcm=None) -> None:
         await tts_command(guild, member, cmd.text)
     elif cmd.action.startswith("mod_"):
         await mod_voice_command(guild, member, cmd, pcm)
+
+
+proxy_volume: dict[int, int] = {}
+
+
+async def proxy_send_command(guild, command: str) -> None:
+    """Escribe un comando del bot de música externo en el canal de casa."""
+    await reply(guild, command)
+
+
+async def music_proxy_play_command(guild, query):
+    query = (query or "").strip()
+    if not query or query.lower() in ("este tema", "ese tema", "el tema", "esta canción", "esa canción"):
+        await reply(guild, "¿Qué tema querés que ponga? Decime el nombre.")
+        return
+    await proxy_send_command(guild, f"{config.PROXY_PLAY_COMMAND} {query}")
 
 
 async def music_command(guild, member, query, requester=None):
@@ -392,6 +420,14 @@ async def music_skip_command(guild):
 
 
 async def music_volume_command(guild, direction: str):
+    if config.MUSIC_PROXY:
+        gid = guild.id
+        vol = proxy_volume.get(gid, 100)
+        vol += config.PROXY_VOLUME_STEP if direction == "up" else -config.PROXY_VOLUME_STEP
+        vol = max(config.PROXY_VOLUME_MIN, min(config.PROXY_VOLUME_MAX, vol))
+        proxy_volume[gid] = vol
+        await proxy_send_command(guild, f"{config.PROXY_VOLUME_COMMAND} {vol}")
+        return
     player = players.get(guild.id)
     if player is None or not (player.is_playing or player.is_paused):
         await reply(guild, "No hay música reproduciéndose.")
@@ -409,12 +445,18 @@ async def tts_command(guild, member, text):
         await reply(guild, str(exc))
         return
     player = players.get(guild.id)
-    await tts_mod.speak(
-        vc,
-        text,
-        pause_cb=player.pause_for_tts if player else None,
-        resume_cb=player.resume_after_tts if player else None,
-    )
+    try:
+        await tts_mod.speak(
+            vc,
+            text,
+            pause_cb=player.pause_for_tts if player else None,
+            resume_cb=player.resume_after_tts if player else None,
+        )
+    except Exception:
+        log.exception("Error generando/reproduciendo TTS")
+        await reply(guild, "No pude generar el audio (¿hay internet?).")
+        return
+    await reply(guild, f"🗣️ {text}")
 
 
 async def mod_voice_command(guild, actor, cmd, pcm=None):

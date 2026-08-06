@@ -35,6 +35,19 @@ IGNORE_BOT_AUDIO: bool = os.getenv("IGNORE_BOT_AUDIO", "1") == "1"
 YDL_SLEEP_REQUESTS: float = float(os.getenv("YDL_SLEEP_REQUESTS", "0.5"))
 MUSIC_VOLUME: float = float(os.getenv("MUSIC_VOLUME", "0.5"))
 
+# Proxy de música: los comandos de música por voz se escriben en el chat como
+# comandos de un bot externo (ej. Jockie Music: m!p <tema>) en vez de
+# reproducir con el reproductor propio.
+MUSIC_PROXY: bool = os.getenv("MUSIC_PROXY", "0") == "1"
+PROXY_PLAY_COMMAND: str = os.getenv("PROXY_PLAY_COMMAND", "m!p")
+PROXY_PAUSE_COMMAND: str = os.getenv("PROXY_PAUSE_COMMAND", "m!pause")
+PROXY_RESUME_COMMAND: str = os.getenv("PROXY_RESUME_COMMAND", "m!resume")
+PROXY_SKIP_COMMAND: str = os.getenv("PROXY_SKIP_COMMAND", "m!skip")
+PROXY_VOLUME_COMMAND: str = os.getenv("PROXY_VOLUME_COMMAND", "m!volume")
+PROXY_VOLUME_MIN: int = int(os.getenv("PROXY_VOLUME_MIN", "0"))
+PROXY_VOLUME_MAX: int = int(os.getenv("PROXY_VOLUME_MAX", "200"))
+PROXY_VOLUME_STEP: int = int(os.getenv("PROXY_VOLUME_STEP", "10"))
+
 # Latencia de las acciones por voz (en segundos).
 SILENCE_DURATION: float = float(os.getenv("SILENCE_DURATION", "2.0"))
 DRAIN_INTERVAL: float = float(os.getenv("DRAIN_INTERVAL", "1.0"))

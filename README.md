@@ -78,6 +78,9 @@ Variables de `.env`:
 | `IGNORE_BOT_AUDIO` | `1` | Ignora el audio de otros bots (ej. otro bot de música). |
 | `MUSIC_VOLUME` | `0.5` | Volumen inicial de la música (0 a 2). |
 | `YDL_SLEEP_REQUESTS` | `0.5` | Pausa entre requests de yt-dlp (mitiga throttling). |
+| `MUSIC_PROXY` | `0` | `1` = los comandos de música por voz se escriben en el chat como comandos de un bot externo (ej. Jockie Music) en vez de reproducir con el reproductor propio. |
+| `PROXY_PLAY_COMMAND` / `PROXY_PAUSE_COMMAND` / `PROXY_RESUME_COMMAND` / `PROXY_SKIP_COMMAND` / `PROXY_VOLUME_COMMAND` | `m!p` / `m!pause` / `m!resume` / `m!skip` / `m!volume` | Comandos del bot externo que se escriben en el chat. |
+| `PROXY_VOLUME_MIN` / `PROXY_VOLUME_MAX` / `PROXY_VOLUME_STEP` | `0` / `200` / `10` | Rango y paso del volumen proxeado (el bot lleva la cuenta por servidor, empieza en 100). |
 
 > El primer arranque descarga el modelo de whisper (≈485 MB para `small`) y el VAD de Silero.
 
@@ -122,11 +125,11 @@ En Discord: `!listen` para que entre al canal de voz donde estás, y `!ayuda` pa
 
 Decí el wake word (por defecto "señor gabriel") seguido de la orden:
 
-- `señor gabriel, poné <tema>` / `reproducí <tema>` / `música <tema>` — reproduce música
+- `señor gabriel, poné <tema>` / `reproducí <tema>` / `música <tema>` / `ponete <tema>` — reproduce música (con `MUSIC_PROXY=1` escribe `m!p <tema>` en el chat para el bot externo)
 - `señor gabriel, pausá la música` / `seguí` — pausar / reanudar
 - `señor gabriel, siguiente canción` — saltea el tema
 - `señor gabriel, subí/bajá el volumen` — volumen ±10%
-- `señor gabriel, decí <texto>` / `che deci <texto>` / `hablá <texto>` / `que digas <texto>` — TTS (el bot habla en el canal de voz)
+- `señor gabriel, decí <texto>` / `che deci <texto>` / `hablá <texto>` / `que digas <texto>` / `decile <texto>` — TTS (el bot habla en el canal de voz)
 - `señor gabriel, escribí en el chat <texto>` — postea el texto en el canal
 - `señor gabriel, muteá a <nombre>` / `desmutear a <nombre>`
 - `señor gabriel, sordeá a <nombre>` / `desordea a <nombre>`
