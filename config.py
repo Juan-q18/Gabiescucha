@@ -9,6 +9,9 @@ BOT_TOKEN: str = os.getenv("DISCORD_BOT_TOKEN", "")
 WAKE_WORD: str = os.getenv("WAKE_WORD", "señor gabriel").strip().lower()
 
 WHISPER_MODEL: str = os.getenv("WHISPER_MODEL", "small")
+# Modelo para re-transcribir SOLO las consultas de musica (mejor precision en
+# titulos de canciones). Vacio ("") = deshabilitado.
+MUSIC_MODEL: str = os.getenv("MUSIC_MODEL", "medium").strip()
 WHISPER_DEVICE: str = os.getenv("WHISPER_DEVICE", "cuda")
 WHISPER_COMPUTE_TYPE: str = os.getenv("WHISPER_COMPUTE_TYPE", "int8")
 WHISPER_LANGUAGE: str = os.getenv("WHISPER_LANGUAGE", "es")

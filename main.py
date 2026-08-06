@@ -49,6 +49,18 @@ transcriber = WhisperTranscriber(
     config.WHISPER_INITIAL_PROMPT,
     config.BEAM_SIZE,
 )
+music_transcriber = None
+if config.MUSIC_MODEL:
+    music_transcriber = WhisperTranscriber(
+        config.MUSIC_MODEL,
+        config.WHISPER_DEVICE,
+        config.WHISPER_COMPUTE_TYPE,
+        config.WHISPER_LANGUAGE,
+        config.NO_SPEECH_THRESHOLD,
+        config.NO_SPEECH_PROB_THRESHOLD,
+        config.WHISPER_INITIAL_PROMPT,
+        config.BEAM_SIZE,
+    )
 wake_word = config.WAKE_WORD
 
 home_channels: dict = {}
@@ -220,10 +232,29 @@ async def process_segment(user, pcm):
     log.info("Transcripción de %s: %s", user.display_name, text)
 
     if _find_wake(text) is not None:
-        await dispatch_voice_command(user, text)
+        await dispatch_voice_command(user, text, pcm)
 
 
-async def dispatch_voice_command(user, text: str) -> None:
+async def _refine_music_query(text: str, pcm) -> str:
+    """Re-transcribe el audio con el modelo de música (mejor precisión en
+    títulos) y devuelve el texto refinado. Fallback: el texto original."""
+    if music_transcriber is None:
+        return text
+    try:
+        refined = await asyncio.to_thread(music_transcriber.transcribe, pcm)
+        if refined and _find_wake(refined) is not None:
+            log.info(
+                "Música (re-transcripción %s): %s",
+                config.MUSIC_MODEL,
+                refined,
+            )
+            return refined
+    except Exception:
+        log.exception("Error re-transcribiendo la consulta de música")
+    return text
+
+
+async def dispatch_voice_command(user, text: str, pcm=None) -> None:
     guild = user.guild
     raw_end = _find_wake(text)
     if raw_end is None:
@@ -237,6 +268,15 @@ async def dispatch_voice_command(user, text: str) -> None:
     member = guild.get_member(user.id)
     if member is None:
         return
+
+    if cmd.action == "music" and pcm is not None:
+        refined_text = await _refine_music_query(text, pcm)
+        if refined_text != text:
+            r_end = _find_wake(refined_text)
+            if r_end is not None:
+                r_cmd = parse_intent(refined_text[r_end:])
+                if r_cmd.action == "music" and r_cmd.text:
+                    cmd = r_cmd
 
     log.info("Comando por voz de %s: %s %s", user.display_name, cmd.action, cmd.args)
 
@@ -410,8 +450,10 @@ async def on_ready():
     if not _worker_started:
         _worker_started = True
         bot.loop.create_task(segment_worker())
-    # Precargar el modelo para que el primer comando no sufra la demora de carga.
+    # Precargar los modelos para que el primer comando no sufra la demora de carga.
     asyncio.get_running_loop().run_in_executor(None, transcriber.load)
+    if music_transcriber is not None:
+        asyncio.get_running_loop().run_in_executor(None, music_transcriber.load)
     await bot.change_presence(
         activity=discord.Activity(type=discord.ActivityType.listening, name="la voz del canal")
     )

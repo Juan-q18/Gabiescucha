@@ -60,6 +60,7 @@ Variables de `.env`:
 | `DISCORD_BOT_TOKEN` | — | Token del bot (obligatorio). |
 | `WAKE_WORD` | `señor gabriel` | Frase que activa los comandos por voz. |
 | `WHISPER_MODEL` | `small` | Modelo de faster-whisper (tiny/base/small/medium/large-v3). |
+| `MUSIC_MODEL` | `medium` | Modelo para re-transcribir **solo** las consultas de música (mejor precisión en títulos). Vacío = deshabilitado (se usa `WHISPER_MODEL` para todo). |
 | `WHISPER_DEVICE` | `cuda` | `cuda` si hay GPU NVIDIA, si no `cpu`. |
 | `WHISPER_COMPUTE_TYPE` | `int8` | Precisión de cómputo (int8/int8_float16/float16). |
 | `WHISPER_LANGUAGE` | `es` | Idioma de la transcripción. |

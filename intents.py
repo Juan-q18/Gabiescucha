@@ -31,6 +31,7 @@ _FILLERS = {
     "podes", "puedes", "puedo", "y", "dale", "che", "eh", "ah", "bueno",
     "quiero", "necesito", "por", "favor", "para", "hacia", "a ver", "aver",
     "entonces", "después", "despues", "luego", "mira", "mirá", "o sea", "osea",
+    "en",
 }
 
 _RULES = [
