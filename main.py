@@ -299,7 +299,7 @@ async def dispatch_voice_command(user, text: str, pcm=None) -> None:
     elif cmd.action == "tts":
         await tts_command(guild, member, cmd.text)
     elif cmd.action.startswith("mod_"):
-        await mod_voice_command(guild, member, cmd)
+        await mod_voice_command(guild, member, cmd, pcm)
 
 
 async def music_command(guild, member, query, requester=None):
@@ -378,13 +378,40 @@ async def tts_command(guild, member, text):
     )
 
 
-async def mod_voice_command(guild, actor, cmd):
+async def mod_voice_command(guild, actor, cmd, pcm=None):
+    err = await _run_mod_command(guild, actor, cmd)
+    if err is None:
+        return
+    if pcm is not None and music_transcriber is not None:
+        await reply(guild, "⏳ No entendí bien, dejame escuchar de nuevo...")
+        try:
+            refined = await asyncio.to_thread(music_transcriber.transcribe, pcm)
+        except Exception:
+            log.exception("Error re-transcribiendo comando de moderación")
+            await reply(guild, err)
+            return
+        if refined and _find_wake(refined) is not None:
+            r_cmd = parse_intent(refined[_find_wake(refined):])
+            if r_cmd.action.startswith("mod_"):
+                log.info(
+                    "Moderación (re-transcripción %s): %s %s",
+                    config.MUSIC_MODEL,
+                    r_cmd.action,
+                    r_cmd.args,
+                )
+                if await _run_mod_command(guild, actor, r_cmd) is None:
+                    return
+    await reply(guild, err)
+
+
+async def _run_mod_command(guild, actor, cmd) -> Optional[str]:
+    """Ejecuta un comando de moderación. Devuelve un mensaje de error si no se
+    pudo resolver el target/canal (para reintentar con otro modelo); None si se
+    ejecutó o si ya se respondió un error de permisos."""
     if cmd.action == "mod_move":
-        # "moveme a X": mover al propio actor al canal indicado.
         channel = mod.resolve_voice_channel(guild, cmd.channel)
         if channel is None:
-            await reply(guild, f"No encontré el canal **{cmd.channel}**.")
-            return
+            return f"No encontré el canal **{cmd.channel}**."
         try:
             mod.require_author_perm(actor, "move_members")
             mod.require_bot_perm(guild, "move_members")
@@ -392,13 +419,12 @@ async def mod_voice_command(guild, actor, cmd):
             await reply(guild, f"🚶 **{actor.display_name}** movido a **{channel.name}**.")
         except mod.ModerationError as exc:
             await reply(guild, str(exc))
-        return
+        return None
 
     target_name = cmd.target or ""
     member = mod.resolve_member(guild, target_name)
     if member is None:
-        await reply(guild, f"No encontré a **{target_name}**.")
-        return
+        return f"No encontré a **{target_name}**."
 
     try:
         if cmd.action in ("mod_mute", "mod_unmute"):
@@ -418,8 +444,7 @@ async def mod_voice_command(guild, actor, cmd):
         elif cmd.action == "mod_move_target":
             channel = mod.resolve_voice_channel(guild, cmd.channel)
             if channel is None:
-                await reply(guild, f"No encontré el canal **{cmd.channel}**.")
-                return
+                return f"No encontré el canal **{cmd.channel}**."
             mod.require_author_perm(actor, "move_members")
             mod.require_bot_perm(guild, "move_members")
             await mod.move_to_channel(member, channel)
@@ -441,6 +466,7 @@ async def mod_voice_command(guild, actor, cmd):
     except Exception as exc:
         log.exception("Error en comando de moderación por voz")
         await reply(guild, f"Error: {exc}")
+    return None
 
 
 @bot.event

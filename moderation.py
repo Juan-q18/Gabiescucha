@@ -52,6 +52,21 @@ def resolve_member(guild: discord.Guild, name: str) -> Optional[discord.Member]:
     if matches:
         return pool[matches[0]]
 
+    # Fallback: probar token por token (whisper suele manchar el target,
+    # ej. "ustazio parasite" -> "parasite" -> paras1te).
+    for tok in sorted(set(needle.split()), key=len, reverse=True):
+        if len(tok) < 3:
+            continue
+        for m in candidates:
+            if m.bot:
+                continue
+            for label in (m.display_name, m.name, m.nick or ""):
+                if label and tok in normalize(label):
+                    return m
+        matches = difflib.get_close_matches(tok, keys, n=1, cutoff=0.6)
+        if matches:
+            return pool[matches[0]]
+
     return None
 
 

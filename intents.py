@@ -18,7 +18,7 @@ _VERBS = {
     "mod_mute": r"(?:mut(?:ea|eá|ia|iar|ear|ar|a|ee|ees|eeis)|silenci(?:a|á|ar|aba|ame|eme))",
     "mod_undeafen": r"des(?:ord(?:ea|eá|ia|iar|ear|ar)|orde)",
     "mod_deafen": r"(?:sord(?:ea|eá|ia|iar|ear|ar)|ensordec(?:e|i|er)|sorda)",
-    "mod_move": r"mov(?:e|é|i|í|er|erme|eme|ia|ió)",
+    "mod_move": r"mov(?:e|é|ea|eá|eal|ete|i|í|er|erme|eme|ia|ió)",
     "mod_kick": r"(?:expuls(?:a|e|á|ia|iar|ar|ame|eme)|ech(?:a|á|ar|ame|eme)|echal(?:o|e))",
     "mod_ban": r"ban(?:ea|eá|ia|iar|ear|ar|ame|eme)",
 }
@@ -32,6 +32,9 @@ _FILLERS = {
     "quiero", "necesito", "por", "favor", "para", "hacia", "a ver", "aver",
     "entonces", "después", "despues", "luego", "mira", "mirá", "o sea", "osea",
     "en",
+    # "usuario" y sus manchados tipicos de whisper (el usuario X -> X)
+    "usuario", "usuaria", "usario", "ustazio", "ustasia", "ustasio",
+    "usorio", "osorio", "usor", "usura",
 }
 
 _RULES = [
@@ -115,9 +118,19 @@ def _parse_move(text: str) -> Optional[Command]:
     if m2:
         target = _strip_fillers(m2.group("target").strip())
         channel = _strip_fillers(m2.group("channel").strip())
+        channel = re.sub(
+            r"^(?:(?:el|la|al)\s+)?(?:canal(?:\s+de\s+voz)?\s+)+",
+            "",
+            channel,
+        )
         if target and channel:
             return Command(action="mod_move_target", args={"target": target, "channel": channel})
     channel = _strip_fillers(rest)
+    channel = re.sub(
+        r"^(?:(?:el|la|al)\s+)?(?:canal(?:\s+de\s+voz)?\s+)+",
+        "",
+        channel,
+    )
     if channel:
         return Command(action="mod_move", args={"channel": channel})
     return None
