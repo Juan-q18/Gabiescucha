@@ -203,8 +203,6 @@ async def process_segment(user, pcm):
     log.info("Transcripción de %s: %s", user.display_name, text)
 
     if _find_wake(text) is not None:
-        if config.RELAY_TRANSCRIPTS:
-            await reply(user.guild, f"**{user.display_name}** dijo: _{text}_")
         await dispatch_voice_command(user, text)
 
 
@@ -580,7 +578,7 @@ async def ayuda(ctx):
         "**Moderación:** `!mutear @user` `!desmutear @user` `!sordear @user` `!desordear @user` "
         "`!mover @user #canal` `!expulsar @user` `!banear @user`\n"
         "**Voz directa:** decime *\"señor gabriel, poné <tema>\"*, *\"decí <texto>\"*, "
-        "*\"escribí <texto>\"*, *\"muteá a <nombre>\"*, *\"mové a <nombre> a <canal>\"*.\n"
+        "*\"escribí en el chat <texto>\"*, *\"muteá a <nombre>\"*, *\"mové a <nombre> a <canal>\"*.\n"
         "**Escucha:** `!listen` / `!salir`"
     )
 

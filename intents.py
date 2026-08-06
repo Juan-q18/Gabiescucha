@@ -6,7 +6,7 @@ from typing import Optional
 # (mutia/mutea, sordia/sordea, movia/movi, decia/deci, etc.)
 _VERBS = {
     "help": r"ayuda|qu[eé] (?:pod[eé]s|sab[eé]s) hacer",
-    "chat": r"escrib[ií](?:me|bime|bi|bime)",
+    "chat": r"escrib[ií](?:me|bime|bi|bime|le|ile|ime)?",
     "tts": r"(?:dec[ií]me|dec[ií]|d[ií]me)",
     "music": r"(?:pon(?:e|é|eme|éme|er|erme)?|reproduc[ií](?:a|e|eme|ir)?|toc(?:a|á|ar|aba|ame|eme)|pas(?:a|á|ar|ame|eme)|m[úu]sic[oa])",
     "mod_unmute": r"desmut(?:ea|eá|ia|e|iar|ear|ar)",
@@ -103,6 +103,16 @@ def _parse_move(text: str) -> Optional[Command]:
     return None
 
 
+def _strip_chat_prefix(text: str) -> str:
+    """Quita 'en el chat / al chat / en el canal / chat / canal' del inicio."""
+    text = re.sub(
+        r"^(?:(?:en|al)\s+)?(?:el\s+|la\s+)?(?:chat|canal)\b\s*",
+        "",
+        text,
+    )
+    return text.strip()
+
+
 def parse(text: str) -> Command:
     """Interpreta una frase libre (post wake word) y devuelve un Command.
 
@@ -131,7 +141,9 @@ def parse(text: str) -> Command:
 
         if kind in ("mod_unmute", "mod_mute", "mod_undeafen", "mod_deafen", "mod_kick", "mod_ban"):
             return Command(action=kind, args={"target": tail})
-        if kind in ("music", "tts", "chat"):
+        if kind in ("music", "tts"):
             return Command(action=kind, args={"text": tail})
+        if kind == "chat":
+            return Command(action=kind, args={"text": _strip_chat_prefix(tail)})
 
     return Command()

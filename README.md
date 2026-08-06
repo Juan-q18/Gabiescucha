@@ -70,7 +70,6 @@ Variables de `.env`:
 | `SEGMENTS_DIR` | `segments` | Carpeta donde se guardan los segmentos con `SAVE_SEGMENTS=1`. |
 | `TTS_VOICE` | `es-AR-ElenaNeural` | Voz de edge-tts. |
 | `TTS_RATE` | `+0%` | Velocidad del TTS (ej. `+10%`, `-10%`). |
-| `RELAY_TRANSCRIPTS` | `1` | Postea en el canal las frases con el wake word. |
 | `IGNORE_BOT_AUDIO` | `1` | Ignora el audio de otros bots (ej. otro bot de música). |
 | `MUSIC_VOLUME` | `0.5` | Volumen inicial de la música (0 a 2). |
 | `YDL_SLEEP_REQUESTS` | `0.5` | Pausa entre requests de yt-dlp (mitiga throttling). |
@@ -120,7 +119,7 @@ Decí el wake word (por defecto "señor gabriel") seguido de la orden:
 
 - `señor gabriel, poné <tema>` / `reproducí <tema>` / `música <tema>` — reproduce música
 - `señor gabriel, decí <texto>` — TTS
-- `señor gabriel, escribí <texto>` — postea el texto en el canal
+- `señor gabriel, escribí en el chat <texto>` — postea el texto en el canal
 - `señor gabriel, muteá a <nombre>` / `desmutear a <nombre>`
 - `señor gabriel, sordeá a <nombre>` / `desordea a <nombre>`
 - `señor gabriel, expulsá a <nombre>` / `banéa a <nombre>`

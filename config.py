@@ -25,7 +25,6 @@ SEGMENTS_DIR: str = os.getenv("SEGMENTS_DIR", "segments")
 TTS_VOICE: str = os.getenv("TTS_VOICE", "es-AR-ElenaNeural")
 TTS_RATE: str = os.getenv("TTS_RATE", "+0%")
 
-RELAY_TRANSCRIPTS: bool = os.getenv("RELAY_TRANSCRIPTS", "1") == "1"
 IGNORE_BOT_AUDIO: bool = os.getenv("IGNORE_BOT_AUDIO", "1") == "1"
 
 YDL_SLEEP_REQUESTS: float = float(os.getenv("YDL_SLEEP_REQUESTS", "0.5"))

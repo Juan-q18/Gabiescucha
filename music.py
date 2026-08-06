@@ -78,6 +78,10 @@ class MusicPlayer:
     def is_playing(self) -> bool:
         return self.vc.is_playing()
 
+    @property
+    def is_paused(self) -> bool:
+        return self.paused
+
     async def add(self, query: str, requester: Optional[str] = None) -> Track:
         track = await asyncio.to_thread(_search, query)
         if track is None:
