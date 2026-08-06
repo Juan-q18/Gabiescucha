@@ -7,7 +7,7 @@ from typing import Optional
 _VERBS = {
     "help": r"ayuda|qu[eé] (?:pod[eé]s|puedes|sab[eé]s|sabes) hacer",
     "chat": r"escrib[ií](?:me|bime|bi|bime|le|ile|ime)?",
-    "tts": r"(?:dec[ií]me|dec[ií]|d[ií]me)",
+    "tts": r"(?:dec[ií]me|dec[ií]|d[ií]me|habl(?:a|á|ame|áme)|qu[eé] dig[aá]s)",
     "music": r"(?:pon(?:e|é|eme|éme|er|erme)?|reproduc[ií](?:a|e|eme|ir)?|toc(?:a|á|ar|aba|ame|eme)|pas(?:a|á|ar|ame|eme)|m[úu]sic[oa])",
     "music_pause": r"paus(?:a|á|ar|ame|áme)",
     "music_resume": r"(?:reanud(?:a|á|ar)|seguí|seguir|contin[uú](?:a|á|ar)?)",

@@ -72,6 +72,7 @@ Variables de `.env`:
 | `DRAIN_INTERVAL` | `1.0` | Cada cuántos segundos se transcriben los segmentos pendientes. |
 | `SAVE_SEGMENTS` | `0` | Guarda cada segmento capturado como WAV en `SEGMENTS_DIR` (diagnóstico). |
 | `SEGMENTS_DIR` | `segments` | Carpeta donde se guardan los segmentos con `SAVE_SEGMENTS=1`. |
+| `SEGMENTS_MAX_AGE_HOURS` | `168` | Edad máxima (horas) de los WAVs de segmentos; los más viejos se borran solos cada hora. `0` = borrar todo al arrancar. |
 | `TTS_VOICE` | `es-AR-ElenaNeural` | Voz de edge-tts. |
 | `TTS_RATE` | `+0%` | Velocidad del TTS (ej. `+10%`, `-10%`). |
 | `IGNORE_BOT_AUDIO` | `1` | Ignora el audio de otros bots (ej. otro bot de música). |
@@ -125,7 +126,7 @@ Decí el wake word (por defecto "señor gabriel") seguido de la orden:
 - `señor gabriel, pausá la música` / `seguí` — pausar / reanudar
 - `señor gabriel, siguiente canción` — saltea el tema
 - `señor gabriel, subí/bajá el volumen` — volumen ±10%
-- `señor gabriel, decí <texto>` — TTS
+- `señor gabriel, decí <texto>` / `che deci <texto>` / `hablá <texto>` / `que digas <texto>` — TTS (el bot habla en el canal de voz)
 - `señor gabriel, escribí en el chat <texto>` — postea el texto en el canal
 - `señor gabriel, muteá a <nombre>` / `desmutear a <nombre>`
 - `señor gabriel, sordeá a <nombre>` / `desordea a <nombre>`

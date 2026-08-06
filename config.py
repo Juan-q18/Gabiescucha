@@ -24,6 +24,8 @@ NO_SPEECH_PROB_THRESHOLD: float = float(os.getenv("NO_SPEECH_PROB_THRESHOLD", "0
 
 SAVE_SEGMENTS: bool = os.getenv("SAVE_SEGMENTS", "0") == "1"
 SEGMENTS_DIR: str = os.getenv("SEGMENTS_DIR", "segments")
+# Los WAVs de segmentos se borran solos si tienen más de esta edad (horas).
+SEGMENTS_MAX_AGE_HOURS: int = int(os.getenv("SEGMENTS_MAX_AGE_HOURS", "168"))
 
 TTS_VOICE: str = os.getenv("TTS_VOICE", "es-AR-ElenaNeural")
 TTS_RATE: str = os.getenv("TTS_RATE", "+0%")

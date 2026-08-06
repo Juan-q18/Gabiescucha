@@ -128,6 +128,45 @@ async def segment_worker():
                 log.exception("Error procesando segmento de voz")
 
 
+CLEANUP_INTERVAL = 3600
+
+
+def _cleanup_old_segments() -> int:
+    """Borra los WAVs de segmentos más viejos que SEGMENTS_MAX_AGE_HOURS.
+    Devuelve cuántos borró."""
+    removed = 0
+    if not os.path.isdir(config.SEGMENTS_DIR):
+        return 0
+    cutoff = time.time() - config.SEGMENTS_MAX_AGE_HOURS * 3600
+    for name in os.listdir(config.SEGMENTS_DIR):
+        if not name.lower().endswith(".wav"):
+            continue
+        path = os.path.join(config.SEGMENTS_DIR, name)
+        try:
+            if os.path.getmtime(path) < cutoff:
+                os.remove(path)
+                removed += 1
+        except OSError:
+            log.exception("Error borrando segmento %s", path)
+    return removed
+
+
+async def segment_cleanup_worker():
+    """Borra los WAVs de segmentos más viejos que SEGMENTS_MAX_AGE_HOURS."""
+    while True:
+        try:
+            removed = await asyncio.to_thread(_cleanup_old_segments)
+            if removed:
+                log.info(
+                    "Limpieza de segmentos: %d WAV(s) borrados (> %dh)",
+                    removed,
+                    config.SEGMENTS_MAX_AGE_HOURS,
+                )
+        except Exception:
+            log.exception("Error en limpieza de segmentos")
+        await asyncio.sleep(CLEANUP_INTERVAL)
+
+
 async def reply(guild, text: str) -> None:
     cid = home_channels.get(guild.id)
     channel = bot.get_channel(cid) if cid else None
@@ -476,6 +515,7 @@ async def on_ready():
     if not _worker_started:
         _worker_started = True
         bot.loop.create_task(segment_worker())
+        bot.loop.create_task(segment_cleanup_worker())
     # Precargar los modelos para que el primer comando no sufra la demora de carga.
     asyncio.get_running_loop().run_in_executor(None, transcriber.load)
     if music_transcriber is not None:
