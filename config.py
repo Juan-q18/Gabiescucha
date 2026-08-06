@@ -29,3 +29,8 @@ IGNORE_BOT_AUDIO: bool = os.getenv("IGNORE_BOT_AUDIO", "1") == "1"
 
 YDL_SLEEP_REQUESTS: float = float(os.getenv("YDL_SLEEP_REQUESTS", "0.5"))
 MUSIC_VOLUME: float = float(os.getenv("MUSIC_VOLUME", "0.5"))
+
+# Latencia de las acciones por voz (en segundos).
+SILENCE_DURATION: float = float(os.getenv("SILENCE_DURATION", "2.0"))
+DRAIN_INTERVAL: float = float(os.getenv("DRAIN_INTERVAL", "1.0"))
+BEAM_SIZE: int = int(os.getenv("BEAM_SIZE", "5"))

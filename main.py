@@ -47,6 +47,7 @@ transcriber = WhisperTranscriber(
     config.NO_SPEECH_THRESHOLD,
     config.NO_SPEECH_PROB_THRESHOLD,
     config.WHISPER_INITIAL_PROMPT,
+    config.BEAM_SIZE,
 )
 wake_word = config.WAKE_WORD
 
@@ -55,8 +56,20 @@ players: dict = {}
 
 _pending_lock = threading.Lock()
 pending: dict = {}
-DRAIN_INTERVAL = 5.0
+DRAIN_INTERVAL = config.DRAIN_INTERVAL
 _worker_started = False
+
+HELP_TEXT = (
+    "**Gabiescucha**\n"
+    "**Música:** `!play <tema>` `!skip` `!pause` `!resume` `!queue` `!volume` `!shuffle` `!loop`\n"
+    "**Voz:** `!decir <texto>`\n"
+    "**Moderación:** `!mutear @user` `!desmutear @user` `!sordear @user` `!desordear @user` "
+    "`!mover @user #canal` `!expulsar @user` `!banear @user`\n"
+    "**Voz directa:** decime *\"señor gabriel, poné <tema>\"*, *\"decí <texto>\"*, "
+    "*\"escribí en el chat <texto>\"*, *\"muteá a <nombre>\"*, *\"mové a <nombre> a <canal>\"*, "
+    "*\"pausá la música\"*, *\"seguí\"*, *\"siguiente canción\"*, *\"subí/bajá el volumen\"*.\n"
+    "**Escucha:** `!listen` / `!salir`"
+)
 
 
 def _normalize(text: str) -> str:
@@ -141,7 +154,11 @@ async def connect_and_listen(channel, guild, home_channel_id, attempts: int = 2)
                 await asyncio.sleep(4)
     else:
         raise last_exc
-    sink = SpeechSink(on_segment=on_segment, ignore_bots=config.IGNORE_BOT_AUDIO)
+    sink = SpeechSink(
+        on_segment=on_segment,
+        ignore_bots=config.IGNORE_BOT_AUDIO,
+        silence_duration=config.SILENCE_DURATION,
+    )
     vc.listen(sink)
     home_channels[guild.id] = home_channel_id
     return vc
@@ -225,6 +242,18 @@ async def dispatch_voice_command(user, text: str) -> None:
 
     if cmd.action == "music":
         await music_command(guild, member, cmd.text, requester=user.display_name)
+    elif cmd.action == "music_pause":
+        await music_pause_command(guild)
+    elif cmd.action == "music_resume":
+        await music_resume_command(guild)
+    elif cmd.action == "music_skip":
+        await music_skip_command(guild)
+    elif cmd.action == "music_volume_up":
+        await music_volume_command(guild, "up")
+    elif cmd.action == "music_volume_down":
+        await music_volume_command(guild, "down")
+    elif cmd.action == "help":
+        await reply(guild, HELP_TEXT)
     elif cmd.action == "chat":
         await reply(guild, cmd.text)
     elif cmd.action == "tts":
@@ -241,6 +270,7 @@ async def music_command(guild, member, query, requester=None):
         return
 
     player = get_player(vc)
+    await reply(guild, f"⏳ Buscando **{query}**...")
     try:
         track = await player.add(query, requester=requester)
     except ValueError as exc:
@@ -252,6 +282,45 @@ async def music_command(guild, member, query, requester=None):
         await reply(guild, f"▶ Reproduciendo: **{player.current.title}**")
     else:
         await reply(guild, f"Agregado a la cola: **{track.title}**")
+
+
+async def music_pause_command(guild):
+    player = players.get(guild.id)
+    if player is None or not player.is_playing:
+        await reply(guild, "No hay música reproduciéndose.")
+        return
+    player.pause()
+    await reply(guild, "⏸ Música pausada.")
+
+
+async def music_resume_command(guild):
+    player = players.get(guild.id)
+    if player is None or not player.is_paused:
+        await reply(guild, "No hay música pausada.")
+        return
+    player.resume()
+    await reply(guild, "▶ Música reanudada.")
+
+
+async def music_skip_command(guild):
+    player = players.get(guild.id)
+    if player is None or not (player.is_playing or player.is_paused):
+        await reply(guild, "No hay nada reproduciéndose.")
+        return
+    player.skip()
+    player.play_next()
+    await reply(guild, "⏭ Siguiente tema.")
+
+
+async def music_volume_command(guild, direction: str):
+    player = players.get(guild.id)
+    if player is None or not (player.is_playing or player.is_paused):
+        await reply(guild, "No hay música reproduciéndose.")
+        return
+    step = 0.1
+    new_volume = player.volume + step if direction == "up" else player.volume - step
+    player.set_volume(max(0.0, min(2.0, round(new_volume, 2))))
+    await reply(guild, f"🔊 Volumen: **{int(player.volume * 100)}%**")
 
 
 async def tts_command(guild, member, text):
@@ -270,6 +339,21 @@ async def tts_command(guild, member, text):
 
 
 async def mod_voice_command(guild, actor, cmd):
+    if cmd.action == "mod_move":
+        # "moveme a X": mover al propio actor al canal indicado.
+        channel = mod.resolve_voice_channel(guild, cmd.channel)
+        if channel is None:
+            await reply(guild, f"No encontré el canal **{cmd.channel}**.")
+            return
+        try:
+            mod.require_author_perm(actor, "move_members")
+            mod.require_bot_perm(guild, "move_members")
+            await mod.move_to_channel(actor, channel)
+            await reply(guild, f"🚶 **{actor.display_name}** movido a **{channel.name}**.")
+        except mod.ModerationError as exc:
+            await reply(guild, str(exc))
+        return
+
     target_name = cmd.target or ""
     member = mod.resolve_member(guild, target_name)
     if member is None:
@@ -291,7 +375,7 @@ async def mod_voice_command(guild, actor, cmd):
             await mod.set_deafen(member, deafen)
             verb = "ensordecido" if deafen else "desensordecido"
             await reply(guild, f"{'🙉' if deafen else '🙂'} **{member.display_name}** {verb}.")
-        elif cmd.action in ("mod_move", "mod_move_target"):
+        elif cmd.action == "mod_move_target":
             channel = mod.resolve_voice_channel(guild, cmd.channel)
             if channel is None:
                 await reply(guild, f"No encontré el canal **{cmd.channel}**.")
@@ -326,6 +410,8 @@ async def on_ready():
     if not _worker_started:
         _worker_started = True
         bot.loop.create_task(segment_worker())
+    # Precargar el modelo para que el primer comando no sufra la demora de carga.
+    asyncio.get_running_loop().run_in_executor(None, transcriber.load)
     await bot.change_presence(
         activity=discord.Activity(type=discord.ActivityType.listening, name="la voz del canal")
     )
@@ -571,16 +657,7 @@ async def banear(ctx, member: discord.Member, *, reason: str = ""):
 
 @bot.command(name="ayuda")
 async def ayuda(ctx):
-    await ctx.send(
-        "**Gabiescucha**\n"
-        "**Música:** `!play <tema>` `!skip` `!pause` `!resume` `!queue` `!volume` `!shuffle` `!loop`\n"
-        "**Voz:** `!decir <texto>`\n"
-        "**Moderación:** `!mutear @user` `!desmutear @user` `!sordear @user` `!desordear @user` "
-        "`!mover @user #canal` `!expulsar @user` `!banear @user`\n"
-        "**Voz directa:** decime *\"señor gabriel, poné <tema>\"*, *\"decí <texto>\"*, "
-        "*\"escribí en el chat <texto>\"*, *\"muteá a <nombre>\"*, *\"mové a <nombre> a <canal>\"*.\n"
-        "**Escucha:** `!listen` / `!salir`"
-    )
+    await ctx.send(HELP_TEXT)
 
 
 def main():

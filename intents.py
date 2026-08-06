@@ -5,10 +5,15 @@ from typing import Optional
 # Verbos tolerantes: aceptan manglings tipicos de whisper
 # (mutia/mutea, sordia/sordea, movia/movi, decia/deci, etc.)
 _VERBS = {
-    "help": r"ayuda|qu[eé] (?:pod[eé]s|sab[eé]s) hacer",
+    "help": r"ayuda|qu[eé] (?:pod[eé]s|puedes|sab[eé]s|sabes) hacer",
     "chat": r"escrib[ií](?:me|bime|bi|bime|le|ile|ime)?",
     "tts": r"(?:dec[ií]me|dec[ií]|d[ií]me)",
     "music": r"(?:pon(?:e|é|eme|éme|er|erme)?|reproduc[ií](?:a|e|eme|ir)?|toc(?:a|á|ar|aba|ame|eme)|pas(?:a|á|ar|ame|eme)|m[úu]sic[oa])",
+    "music_pause": r"paus(?:a|á|ar|ame|áme)",
+    "music_resume": r"(?:reanud(?:a|á|ar)|seguí|seguir|contin[uú](?:a|á|ar)?)",
+    "music_skip": r"(?:siguiente|salt(?:a|á|ar|ame|áme)|adelant(?:a|á|ar|ame|áme))",
+    "music_volume_up": r"(?:sub(?:i|í|ime|íme|ir|e|é)?|m[áa]s (?:fuerte|alto))",
+    "music_volume_down": r"(?:baj(?:a|á|ame|áme|ar)?|m[áa]s (?:bajo|flojo|suave))",
     "mod_unmute": r"desmut(?:ea|eá|ia|e|iar|ear|ar)",
     "mod_mute": r"(?:mut(?:ea|eá|ia|iar|ear|ar|a|ee|ees|eeis)|silenci(?:a|á|ar|aba|ame|eme))",
     "mod_undeafen": r"des(?:ord(?:ea|eá|ia|iar|ear|ar)|orde)",
@@ -32,6 +37,11 @@ _RULES = [
     ("help", "help"),
     ("chat", "chat"),
     ("tts", "tts"),
+    ("music_pause", "music_pause"),
+    ("music_resume", "music_resume"),
+    ("music_skip", "music_skip"),
+    ("music_volume_up", "music_volume_up"),
+    ("music_volume_down", "music_volume_down"),
     ("music", "music"),
     ("mod_unmute", "mod_unmute"),
     ("mod_mute", "mod_mute"),
@@ -41,6 +51,15 @@ _RULES = [
     ("mod_kick", "mod_kick"),
     ("mod_ban", "mod_ban"),
 ]
+
+# Acciones de control de musica: alcanza con que aparezca el verbo.
+_NO_TAIL_ACTIONS = {
+    "music_pause",
+    "music_resume",
+    "music_skip",
+    "music_volume_up",
+    "music_volume_down",
+}
 
 
 @dataclass
@@ -125,7 +144,7 @@ def parse(text: str) -> Command:
 
     for action, kind in _RULES:
         if action == "help":
-            if re.search(r"\b(?:ayuda|qu[eé] (?:pod[eé]s|sab[eé]s) hacer)\b", text):
+            if re.search(r"\b(?:ayuda|qu[eé] (?:pod[eé]s|puedes|sab[eé]s|sabes) hacer)\b", text):
                 return Command(action="help")
             continue
 
@@ -133,6 +152,11 @@ def parse(text: str) -> Command:
             cmd = _parse_move(text)
             if cmd:
                 return cmd
+            continue
+
+        if kind in _NO_TAIL_ACTIONS:
+            if re.search(r"\b(" + _VERBS[kind] + r")\b", text, re.I):
+                return Command(action=kind)
             continue
 
         tail = _after_verb(text, kind)

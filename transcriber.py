@@ -24,6 +24,7 @@ class WhisperTranscriber:
         no_speech_threshold: float = -1.0,
         no_speech_prob_threshold: float = 0.6,
         initial_prompt: str = "",
+        beam_size: int = 5,
     ):
         self.model = model
         self.device = device
@@ -32,9 +33,16 @@ class WhisperTranscriber:
         self.no_speech_threshold = no_speech_threshold
         self.no_speech_prob_threshold = no_speech_prob_threshold
         self.initial_prompt = initial_prompt
+        self.beam_size = beam_size
         self._model = None
         self._lock = threading.Lock()
         self._load_attempted = False
+
+    def load(self) -> None:
+        """Carga el modelo en memoria (se puede llamar al arrancar para evitar
+        la demora del primer comando)."""
+        with self._lock:
+            self._load()
 
     def _load(self) -> None:
         if self._model is not None or self._load_attempted:
@@ -88,6 +96,7 @@ class WhisperTranscriber:
                 initial_prompt=self.initial_prompt,
                 condition_on_previous_text=False,
                 vad_filter=False,
+                beam_size=self.beam_size,
             )
             parts = []
             for seg in segments:

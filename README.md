@@ -66,6 +66,9 @@ Variables de `.env`:
 | `WHISPER_INITIAL_PROMPT` | *(frase de comandos)* | Frase de ejemplo que inclina a whisper hacia los comandos del bot (mejora el parseo). |
 | `NO_SPEECH_THRESHOLD` | `-1.0` | Confianza mínima del segmento (avg_logprob); solo se descarta si además `no_speech_prob` supera el umbral siguiente. |
 | `NO_SPEECH_PROB_THRESHOLD` | `0.6` | Probabilidad de "no voz" de whisper para descartar un segmento. |
+| `BEAM_SIZE` | `5` | Beam de whisper (`1` = más rápido, menos preciso). |
+| `SILENCE_DURATION` | `2.0` | Segundos de silencio para considerar terminado un segmento de voz (más bajo = respuesta más rápida, riesgo de partir frases). |
+| `DRAIN_INTERVAL` | `1.0` | Cada cuántos segundos se transcriben los segmentos pendientes. |
 | `SAVE_SEGMENTS` | `0` | Guarda cada segmento capturado como WAV en `SEGMENTS_DIR` (diagnóstico). |
 | `SEGMENTS_DIR` | `segments` | Carpeta donde se guardan los segmentos con `SAVE_SEGMENTS=1`. |
 | `TTS_VOICE` | `es-AR-ElenaNeural` | Voz de edge-tts. |
@@ -118,12 +121,15 @@ En Discord: `!listen` para que entre al canal de voz donde estás, y `!ayuda` pa
 Decí el wake word (por defecto "señor gabriel") seguido de la orden:
 
 - `señor gabriel, poné <tema>` / `reproducí <tema>` / `música <tema>` — reproduce música
+- `señor gabriel, pausá la música` / `seguí` — pausar / reanudar
+- `señor gabriel, siguiente canción` — saltea el tema
+- `señor gabriel, subí/bajá el volumen` — volumen ±10%
 - `señor gabriel, decí <texto>` — TTS
 - `señor gabriel, escribí en el chat <texto>` — postea el texto en el canal
 - `señor gabriel, muteá a <nombre>` / `desmutear a <nombre>`
 - `señor gabriel, sordeá a <nombre>` / `desordea a <nombre>`
 - `señor gabriel, expulsá a <nombre>` / `banéa a <nombre>`
-- `señor gabriel, mové a <nombre> a <canal>` / `movelo a <canal>`
+- `señor gabriel, mové a <nombre> a <canal>` / `moveme a <canal>`
 - `señor gabriel, qué podés hacer` / `ayuda` — lista de comandos
 
 Los nombres se resuelven con coincidencia aproximada sobre el nick/nombre (ej. "muteá a juan" funciona si hay "Juan Pérez").
